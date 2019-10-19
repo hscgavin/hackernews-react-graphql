@@ -3,6 +3,33 @@ import Link from './Link';
 import gql from 'graphql-tag';
 import { Query } from 'react-apollo';
 
+const NEW_VOTES_SUBSCRIPTION = gql`
+  subscription {
+    newVote {
+      id
+      link {
+        id
+        url
+        description
+        createdAt
+        postedBy {
+          id
+          name
+        }
+        votes {
+          id
+          user {
+            id
+          }
+        }
+      }
+      user {
+        id
+      }
+    }
+  }
+`;
+
 const NEW_LINKS_SUBSCRIPTION = gql`
   subscription {
     newLink {
@@ -56,7 +83,11 @@ class LinkList extends Component {
 
     store.writeQuery({ query: FEED_QUERY, data });
   };
-
+  _subscribeToNewVotes = subscribeToMore => {
+    subscribeToMore({
+      document: NEW_VOTES_SUBSCRIPTION
+    });
+  };
   _subscribeToNewLinks = subscribeToMore => {
     subscribeToMore({
       document: NEW_LINKS_SUBSCRIPTION,
@@ -84,6 +115,7 @@ class LinkList extends Component {
           if (loading) return <div>Fetching</div>;
           if (error) return <div>Error</div>;
           this._subscribeToNewLinks(subscribeToMore);
+          this._subscribeToNewVotes(subscribeToMore);
           const linksToRender = data.feed.links;
           return (
             <div>
